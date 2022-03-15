@@ -77,12 +77,6 @@ V8_EXPORT void SetModuleResolver(v8::Isolate *Isolate, CSharpModuleResolveCallba
     JsEngine->ModuleResolver = Resolver;
     JsEngine->Idx = Idx;
 }
-V8_EXPORT void SetPushJSFunctionArgumentsCallback(v8::Isolate *Isolate, CSharpPushJSFunctionArgumentsCallback Callback, int32_t Idx)
-{
-    auto JsEngine = FV8Utils::IsolateData<JSEngine>(Isolate);
-    JsEngine->GetJSArgumentsCallback = Callback;
-    JsEngine->Idx = Idx;
-}
 
 V8_EXPORT FResultInfo * ExecuteModule(v8::Isolate *Isolate, const char* Path, const char* Exportee)
 {
@@ -672,7 +666,7 @@ V8_EXPORT void PushJSFunctionForJSFunction(JSFunction *F, JSFunction *V)
     Value.Type = puerts::Function;
     Value.FunctionPtr = V;
     // F->PushArgument(Value);
-   F->Arguments.push_back(std::move(Value));
+    F->Arguments.push_back(std::move(Value));
 }
 
 V8_EXPORT void PushJSObjectForJSFunction(JSFunction *F, puerts::JSObject *V)

@@ -89,13 +89,6 @@ namespace puerts
         v8::Local<v8::Context> Context = ResultInfo.Context.Get(Isolate);
         v8::Context::Scope ContextScope(Context);
 
-        Arguments.clear();
-        JSEngine* JsEngine = FV8Utils::IsolateData<JSEngine>(Isolate);
-        if (argumentsLength > 0)
-        {
-            JsEngine->GetJSArgumentsCallback(Isolate, JsEngine->Idx, this);
-        }
-        
         v8::TryCatch TryCatch(Isolate);
         v8::Local<v8::Value> *args = (v8::Local<v8::Value> *)alloca(sizeof(v8::Local<v8::Value>) * Arguments.size());
         for (int i = 0; i < Arguments.size(); i++)
