@@ -13,27 +13,11 @@ using System.Threading.Tasks;
 
 namespace Puerts
 {
-    public delegate void JSFunctionCallback(IntPtr isolate, IntPtr info, IntPtr self, int argumentsLen);
-    public delegate object JSConstructorCallback(IntPtr isolate, IntPtr info, int argumentsLen);
+    public delegate void FunctionCallback(IntPtr isolate, IntPtr info, IntPtr self, int argumentsLen);
+    public delegate object ConstructorCallback(IntPtr isolate, IntPtr info, int argumentsLen);
+
     public class JsEnv : IDisposable
     {
-        protected PushJSFunctionArgumentsCallback PushArgumentsCallback;
-        public void SetPushArgumentsCallback(PushJSFunctionArgumentsCallback callback) 
-        {
-            PushArgumentsCallback = callback;
-        }
-        public void UnsetPushArgumentsCallback() 
-        {
-            PushArgumentsCallback = null;
-        }
-        public void InvokePushArgumentsCallback(IntPtr nativeJsFuncPtr) 
-        {
-            if (PushArgumentsCallback == null) {
-                throw new Exception("PushArgumentsCallback is not found");
-            }
-            PushArgumentsCallback(isolate, Idx, nativeJsFuncPtr);
-        }
-
         internal readonly int Idx;
 
         internal readonly GeneralGetterManager GeneralGetterManager;
@@ -141,7 +125,6 @@ namespace Puerts
             PuertsDLL.SetGlobalFunction(isolate, "__tgjsGetLoader", StaticCallbacks.JsEnvCallbackWrap, AddCallback(GetLoader));
 
             PuertsDLL.SetModuleResolver(isolate, StaticCallbacks.ModuleResolverWrap, Idx);
-            PuertsDLL.SetPushJSFunctionArgumentsCallback(isolate, StaticCallbacks.PushJSFunctionArgumentsCallback, Idx);
             //可以DISABLE掉自动注册，通过手动调用PuertsStaticWrap.AutoStaticCodeRegister.Register(jsEnv)来注册
 #if !DISABLE_AUTO_REGISTER
             const string AutoStaticCodeRegisterClassName = "PuertsStaticWrap.AutoStaticCodeRegister";
@@ -332,21 +315,21 @@ namespace Puerts
 #endif
         }
 
-        private readonly List<JSFunctionCallback> callbacks = new List<JSFunctionCallback>();
+        private readonly List<FunctionCallback> callbacks = new List<FunctionCallback>();
 
         internal void InvokeCallback(IntPtr isolate, int callbackIdx, IntPtr info, IntPtr self, int paramLen)
         {
             callbacks[callbackIdx](isolate, info, self, paramLen);
         }
 
-        internal long AddCallback(JSFunctionCallback callback)
+        internal long AddCallback(FunctionCallback callback)
         {
             int callbackIdx = callbacks.Count;
             callbacks.Add(callback);
             return Utils.TwoIntToLong(Idx, callbackIdx);
         }
 
-        private readonly List<JSConstructorCallback> constructorCallbacks = new List<JSConstructorCallback>();
+        private readonly List<ConstructorCallback> constructorCallbacks = new List<ConstructorCallback>();
 
         internal IntPtr InvokeConstructor(IntPtr isolate, int callbackIdx, IntPtr info, int paramLen)
         {
@@ -356,7 +339,7 @@ namespace Puerts
             return new IntPtr(objectId);
         }
 
-        internal long AddConstructor(JSConstructorCallback callback)
+        internal long AddConstructor(ConstructorCallback callback)
         {
             int callbackIdx = constructorCallbacks.Count;
             constructorCallbacks.Add(callback);
@@ -633,9 +616,7 @@ namespace Puerts
             PuertsDLL.LogicTick(isolate);
             tickHandler.ForEach(fn =>
             {
-                SetPushArgumentsCallback((IntPtr isolate, int envIdx, IntPtr nativeJsFuncPtr) => { });
                 IntPtr resultInfo = PuertsDLL.InvokeJSFunction(fn, false);
-                UnsetPushArgumentsCallback();
                 if (resultInfo==IntPtr.Zero)
                 {
                     var exceptionInfo = PuertsDLL.GetFunctionLastExceptionInfo(fn);

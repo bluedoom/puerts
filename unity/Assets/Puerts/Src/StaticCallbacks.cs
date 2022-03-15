@@ -17,12 +17,6 @@ namespace Puerts
             return JsEnv.jsEnvs[jsEnvIdx].ResolveModuleContent(identifer);
         }
 
-        [MonoPInvokeCallback(typeof(PushJSFunctionArgumentsCallback))]
-        internal static void PushJSFunctionArgumentsCallback(IntPtr isolate, int jsEnvIdx, IntPtr nativeJsFuncPtr)
-        {
-            JsEnv.jsEnvs[jsEnvIdx].InvokePushArgumentsCallback(nativeJsFuncPtr);
-        }
-
         [MonoPInvokeCallback(typeof(V8FunctionCallback))]
         internal static void JsEnvCallbackWrap(IntPtr isolate, IntPtr info, IntPtr self, int paramLen, long data)
         {
