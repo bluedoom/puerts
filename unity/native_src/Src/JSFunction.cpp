@@ -79,7 +79,7 @@ namespace puerts
         }
     }
 
-    bool JSFunction::Invoke(int argumentsLength, bool HasResult)
+    bool JSFunction::Invoke(bool HasResult)
     {
         v8::Isolate* Isolate = ResultInfo.Isolate;
         v8::Isolate::Scope IsolateScope(Isolate);
@@ -88,12 +88,14 @@ namespace puerts
         v8::Context::Scope ContextScope(Context);
 
         v8::TryCatch TryCatch(Isolate);
-        v8::Local<v8::Value> *args = (v8::Local<v8::Value> *)alloca(sizeof(v8::Local<v8::Value>) * Arguments.size());
-        for (int i = 0; i < Arguments.size(); i++)
+        auto size = Arguments.size();
+        v8::Local<v8::Value>* args = (v8::Local<v8::Value>*) alloca(sizeof(v8::Local<v8::Value>) * size);
+        for (int i = 0; i < size; i++)
         {
             args[i] = ToV8(Isolate, Context, Arguments[i]);
         }
-        auto maybeValue = GFunction.Get(Isolate)->Call(Context, Context->Global(), static_cast<int>(Arguments.size()), args);
+        Arguments.clear();
+        auto maybeValue = GFunction.Get(Isolate)->Call(Context, Context->Global(), static_cast<int>(size), args);
         
         if (TryCatch.HasCaught())
         {

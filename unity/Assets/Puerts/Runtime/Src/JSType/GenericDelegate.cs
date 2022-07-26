@@ -380,14 +380,7 @@ namespace Puerts
             }
         }
 
-        public static IntPtr InvokeJSFunction(JsEnv jsEnv, IntPtr nativeJsFuncPtr, int argumentsLength, bool hasResult, PushJSFunctionArgumentsCallback argumentsPusher)
-        {
-            jsEnv.ArgumentsPusher = argumentsPusher;
-            IntPtr resultInfo = PuertsDLL.InvokeJSFunction(nativeJsFuncPtr, argumentsLength, hasResult);
-            jsEnv.ArgumentsPusher = null;
 
-            return resultInfo;
-        }
 
         public void Action()
         {
