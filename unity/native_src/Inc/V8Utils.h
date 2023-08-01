@@ -43,7 +43,7 @@ public:
     {
         auto ExceptionStr = v8::String::NewFromUtf8(Isolate, Message,
             v8::NewStringType::kNormal).ToLocalChecked();
-        Isolate->ThrowException(v8::Exception::Error(ExceptionStr));
+        Isolate->ThrowException(ExceptionStr);
     }
 
     template<typename T>
