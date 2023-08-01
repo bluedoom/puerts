@@ -43,7 +43,7 @@ public:
     {
         auto ExceptionStr = v8::String::NewFromUtf8(Isolate, Message,
             v8::NewStringType::kNormal).ToLocalChecked();
-        Isolate->ThrowException(ExceptionStr);
+        Isolate->ThrowException(v8::Exception::Error(ExceptionStr));
     }
 
     template<typename T>
@@ -80,21 +80,22 @@ public:
         {
             v8::Local<v8::Context> Context(Isolate->GetCurrentContext());
 
-            // 输出 (filename):(line number): (message).
             std::ostringstream stm;
-            v8::String::Utf8Value FileName(Isolate, Message->GetScriptResourceName());
-            int LineNum = Message->GetLineNumber(Context).FromJust();
-            const char * StrFileName = *FileName;
-            stm << (StrFileName == nullptr ? "unknow file" : StrFileName) << ":" << LineNum << ": " << ExceptionStr;
-
-            stm << std::endl;
 
             // 输出调用栈信息
             v8::Local<v8::Value> StackTrace;
             if (TryCatch.StackTrace(Context).ToLocal(&StackTrace))
             {
                 v8::String::Utf8Value StackTraceVal(Isolate, StackTrace);
-                stm << std::endl << *StackTraceVal;
+                stm << *StackTraceVal;
+            }
+            else
+            {
+                // 输出 (filename):(line number): (message).
+                v8::String::Utf8Value FileName(Isolate, Message->GetScriptResourceName());
+                int LineNum = Message->GetLineNumber(Context).FromJust();
+                const char* StrFileName = *FileName;
+                stm << (StrFileName == nullptr ? "unknow file" : StrFileName) << ":" << LineNum << ": " << ExceptionStr;
             }
             return stm.str();
         }
