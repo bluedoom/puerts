@@ -164,7 +164,7 @@ v8::Local<v8::FunctionTemplate> FStructWrapper::ToFunctionTemplate(v8::Isolate* 
     auto Result = CachedFunctionTemplate.Get(Isolate);
 #else
     auto Result = v8::FunctionTemplate::New(
-        Isolate, Construtor, v8::External::New(Isolate, this));    //和class的区别就这里传的函数不一样，后续尽量重用
+        Isolate, Construtor, v8::External::New(Isolate, this));    // 和class的区别就这里传的函数不一样，后续尽量重用
     Result->InstanceTemplate()->SetInternalFieldCount(4);
 #endif
 
@@ -248,21 +248,48 @@ v8::Local<v8::FunctionTemplate> FStructWrapper::ToFunctionTemplate(v8::Isolate* 
                 continue;
             }
 
-            auto Key = FV8Utils::InternalString(Isolate, Function->GetName());
+            FString FuncName = Function->GetName();
+            auto Key = FV8Utils::InternalString(Isolate, FuncName);
+#if PUERTS_WITH_EDITOR_SUFFIX
+            // 这里同时绑定带Suffix和不带Suffix的后缀是为了兼容现有的一些js写的代码(PuertsEditor)
+            v8::Local<v8::String> AdditionalKey{};
+            if (puerts::IsEditorOnlyUFunction(Function))
+            {
+                FString SuffixFuncName = FuncName + EditorOnlyPropertySuffix.GetData();
+                AdditionalKey = FV8Utils::InternalString(Isolate, SuffixFuncName);
+            }
+#endif
+            // 这里同时绑定带Suffix和不带Suffix的后缀是为了兼容现有的一些js写的代码(PuertsEditor)
 
             if (Function->HasAnyFunctionFlags(FUNC_Static))
             {
                 auto FunctionTranslator = GetFunctionTranslator(Function);
                 AddedFunctions.Add(Function->GetFName());
                 if (!IsReuseTemplate)
+                {
                     Result->Set(Key, FunctionTranslator->ToFunctionTemplate(Isolate));
+#if PUERTS_WITH_EDITOR_SUFFIX
+                    if (!AdditionalKey.IsEmpty())
+                    {
+                        Result->Set(AdditionalKey, FunctionTranslator->ToFunctionTemplate(Isolate));
+                    }
+#endif
+                }
             }
             else
             {
                 auto FunctionTranslator = GetMethodTranslator(Function, false);
                 AddedMethods.Add(Function->GetFName());
                 if (!IsReuseTemplate)
+                {
                     Result->PrototypeTemplate()->Set(Key, FunctionTranslator->ToFunctionTemplate(Isolate));
+#if PUERTS_WITH_EDITOR_SUFFIX
+                    if (!AdditionalKey.IsEmpty())
+                    {
+                        Result->PrototypeTemplate()->Set(AdditionalKey, FunctionTranslator->ToFunctionTemplate(Isolate));
+                    }
+#endif
+                }
             }
         }
 
@@ -426,6 +453,12 @@ void FStructWrapper::StaticClass(const v8::FunctionCallbackInfo<v8::Value>& Info
 
     FStructWrapper* This = reinterpret_cast<FStructWrapper*>((v8::Local<v8::External>::Cast(Info.Data()))->Value());
 
+    if (!This->Struct.IsValid())
+    {
+        FV8Utils::ThrowException(Isolate, "Associated UStruct had been GC");
+        return;
+    }
+
     auto Result =
         FV8Utils::IsolateData<IObjectMapper>(Isolate)->FindOrAdd(Isolate, Context, This->Struct->GetClass(), This->Struct.Get());
     Info.GetReturnValue().Set(Result);
@@ -440,6 +473,12 @@ void FStructWrapper::Find(const v8::FunctionCallbackInfo<v8::Value>& Info)
     v8::Context::Scope ContextScope(Context);
 
     FStructWrapper* This = reinterpret_cast<FStructWrapper*>((v8::Local<v8::External>::Cast(Info.Data()))->Value());
+
+    if (!This->Struct.IsValid())
+    {
+        FV8Utils::ThrowException(Isolate, "Associated UStruct had been GC");
+        return;
+    }
 
     UClass* Class = Cast<UClass>(This->Struct);
 
@@ -486,6 +525,12 @@ void FStructWrapper::Load(const v8::FunctionCallbackInfo<v8::Value>& Info)
 
     FStructWrapper* This = reinterpret_cast<FStructWrapper*>((v8::Local<v8::External>::Cast(Info.Data()))->Value());
 
+    if (!This->Struct.IsValid())
+    {
+        FV8Utils::ThrowException(Isolate, "Associated UStruct had been GC");
+        return;
+    }
+
     UClass* Class = Cast<UClass>(This->Struct);
 
     if (Class && Info.Length() > 0 && Info[0]->IsString())
@@ -523,6 +568,11 @@ void FScriptStructWrapper::New(const v8::FunctionCallbackInfo<v8::Value>& Info)
     v8::Context::Scope ContextScope(Context);
 
     FScriptStructWrapper* This = reinterpret_cast<FScriptStructWrapper*>((v8::Local<v8::External>::Cast(Info.Data()))->Value());
+    if (!This->Struct.IsValid())
+    {
+        FV8Utils::ThrowException(Isolate, "Associated UStruct had been GC");
+        return;
+    }
     This->New(Isolate, Context, Info);
 }
 
@@ -612,6 +662,11 @@ void FClassWrapper::New(const v8::FunctionCallbackInfo<v8::Value>& Info)
     v8::Context::Scope ContextScope(Context);
 
     FClassWrapper* This = reinterpret_cast<FClassWrapper*>((v8::Local<v8::External>::Cast(Info.Data()))->Value());
+    if (!This->Struct.IsValid())
+    {
+        FV8Utils::ThrowException(Isolate, "Associated UStruct had been GC");
+        return;
+    }
     This->New(Isolate, Context, Info);
 }
 

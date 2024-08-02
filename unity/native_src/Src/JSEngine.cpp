@@ -107,7 +107,7 @@ namespace PUERTS_NAMESPACE
         Flags += " --jitless --no-expose-wasm";
 #endif
 #endif
-#if PLATFORM_IOS
+#if defined(PLATFORM_IOS) || defined(PLATFORM_OHOS)
         Flags += " --jitless --no-expose-wasm";
 #endif
         v8::V8::SetFlagsFromString(Flags.c_str(), static_cast<int>(Flags.size()));
@@ -432,7 +432,11 @@ namespace PUERTS_NAMESPACE
         auto Pos = CallbackInfos.size();
         auto CallbackInfo = new FCallbackInfo(IsStatic, Callback, Data);
         CallbackInfos.push_back(CallbackInfo);
+#if defined(WITH_QUICKJS)
         return v8::FunctionTemplate::New(Isolate, CSharpFunctionCallbackWrap, v8::External::New(Isolate, CallbackInfos[Pos]));
+#else
+        return v8::FunctionTemplate::New(Isolate, CSharpFunctionCallbackWrap, v8::External::New(Isolate, CallbackInfos[Pos]),  v8::Local<v8::Signature>(), 0,  v8::ConstructorBehavior::kThrow);
+#endif
     }
 
     void JSEngine::SetGlobalFunction(const char *Name, CSharpFunctionCallback Callback, int64_t Data)

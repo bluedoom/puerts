@@ -603,6 +603,7 @@ void FTypeScriptDeclarationGenerator::LoadAllWidgetBlueprint(FName InSearchPath,
 
     FARFilter BPFilter;
     BPFilter.PackagePaths.Add(PackagePath);
+    BPFilter.PackagePaths.Add(FName(TEXT("/Engine")));
     BPFilter.bRecursivePaths = true;
     BPFilter.bRecursiveClasses = true;
 #if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 0
@@ -895,7 +896,14 @@ bool FTypeScriptDeclarationGenerator::GenFunction(
             OwnerBuffer << "static ";
         }
 
-        OwnerBuffer << SafeFieldName(Function->GetName());
+        FString FuncName = Function->GetName();
+#if PUERTS_WITH_EDITOR_SUFFIX
+        if (puerts::IsEditorOnlyUFunction(Function))
+        {
+            FuncName += EditorOnlyPropertySuffix;
+        }
+#endif
+        OwnerBuffer << SafeFieldName(FuncName);
     }
     OwnerBuffer << "(";
     PropertyMacro* ReturnValue = nullptr;
@@ -1220,7 +1228,12 @@ void FTypeScriptDeclarationGenerator::GenClass(UClass* Class)
         AddedProperties.Add(Property->GetName());
 
         FStringBuffer TmpBuff;
-        TmpBuff << SafeFieldName(Property->GetName()) << ": ";
+        FString SN = Property->GetName();
+        if (Property->IsEditorOnlyProperty())
+        {
+            SN += EditorOnlyPropertySuffix;
+        }
+        TmpBuff << SafeFieldName(SN) << ": ";
         TArray<UObject*> RefTypesTmp;
         if (!GenTypeDecl(TmpBuff, Property, RefTypesTmp))
         {

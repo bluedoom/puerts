@@ -66,13 +66,6 @@ set ( PUERTS_INC
     ${PROJECT_SOURCE_DIR}/../../unreal/Puerts/Source/JsEnv/Private/PromiseRejectCallback.hpp
 )
 
-if(DEFINED PUERTS_EXTRA_SRC)
-    list(APPEND PUERTS_SRC ${PUERTS_EXTRA_SRC})
-endif()
-
-if(DEFINED PUERTS_EXTRA_INC)
-    include_directories(${PUERTS_EXTRA_INC})
-endif()
 
 macro(source_group_by_dir proj_dir source_files)
     if(MSVC OR APPLE)
@@ -111,6 +104,14 @@ else ()
     )
 endif()
 
+if(DEFINED PUERTS_EXTRA_SRC)
+    list(APPEND PUERTS_SRC ${PUERTS_EXTRA_SRC})
+endif()
+
+if(DEFINED PUERTS_EXTRA_INC)
+    include_directories(${PUERTS_EXTRA_INC})
+endif()
+
 if ( APPLE )
     if ( IOS )
         set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD)")
@@ -135,9 +136,15 @@ if ( APPLE )
         )
     endif ()
 else ()
-    add_library(puerts SHARED
-        ${PUERTS_SRC} ${PUERTS_INC}
-    )
+    if (CMAKE_SYSTEM_NAME MATCHES "Emscripten") 
+        add_library(puerts STATIC
+            ${PUERTS_SRC} ${PUERTS_INC}
+        )
+    else ()
+        add_library(puerts SHARED
+            ${PUERTS_SRC} ${PUERTS_INC}
+        )
+   endif ()
 endif ()
 
 set(PUERTS_COMPILE_DEFINITIONS)
@@ -214,16 +221,17 @@ if ( MSYS OR WIN32 )
     list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_WINDOWS)
 elseif ( OHOS )
     set(BACKEND_LIB_NAMES "-Wl,--whole-archive$<SEMICOLON>${BACKEND_LIB_NAMES}$<SEMICOLON>-Wl,--no-whole-archive")
-    if ( ANDROID_ABI STREQUAL "armeabi-v7a")
+    list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_OHOS)
+    if ( OHOS_ARCH STREQUAL "armeabi-v7a")
         # definition
-        list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_ANDROID_ARM)
+        list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_OHOS_ARM)
 
-    elseif ( ANDROID_ABI STREQUAL "arm64-v8a")
+    elseif ( OHOS_ARCH STREQUAL "arm64-v8a")
         # definition
-        list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_ANDROID_ARM64)
+        list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_OHOS_ARM64)
     else ()
         # definition
-        list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_ANDROID_x64)
+        list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_OHOS_x64)
     endif ()
 elseif ( ANDROID )
 
@@ -285,7 +293,7 @@ elseif (UNIX)
     
     # definition
     list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_LINUX)
-    if (NOT ("${JS_ENGINE}" STREQUAL "nodejs_16") AND NOT ("${JS_ENGINE}" STREQUAL "v8_10.6.194"))
+    if (NOT ("${JS_ENGINE}" STREQUAL "nodejs_16") AND NOT ("${JS_ENGINE}" STREQUAL "v8_10.6.194") AND NOT (CMAKE_SYSTEM_NAME MATCHES "Emscripten"))
         set(CMAKE_CXX_COMPILER "clang++")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
