@@ -209,7 +209,6 @@ if ( MSYS OR WIN32 )
             shlwapi.lib
         )
     endif ()
-
     # definition
     list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_WINDOWS)
 elseif ( OHOS )
@@ -283,7 +282,6 @@ elseif ( APPLE )
 elseif (UNIX)
     # link
     target_link_libraries(puerts pthread)
-    
     # definition
     list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_LINUX)
     if (NOT ("${JS_ENGINE}" STREQUAL "nodejs_16") AND NOT ("${JS_ENGINE}" STREQUAL "v8_10.6.194"))
@@ -291,6 +289,9 @@ elseif (UNIX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
     endif ()
+elseif (__COMPILER_PS5)
+    target_link_libraries(puerts ${CMAKE_THREAD_LIBS_INIT})
+    list(APPEND PUERTS_COMPILE_DEFINITIONS BUILDING_V8_SHARED __PROSPERO__)
 endif ()
 
 # link
