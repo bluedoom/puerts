@@ -134,7 +134,11 @@ if ( APPLE )
             PRIVATE "-Wl,-rpath,@loader_path/"
         )
     endif ()
-else ()
+elseif(__COMPILER_NX)
+    add_library(puerts STATIC
+    ${PUERTS_SRC} ${PUERTS_INC}
+    )
+else()
     add_library(puerts SHARED
         ${PUERTS_SRC} ${PUERTS_INC}
     )
@@ -292,6 +296,10 @@ elseif (UNIX)
 elseif (__COMPILER_PS5)
     target_link_libraries(puerts ${CMAKE_THREAD_LIBS_INIT})
     list(APPEND PUERTS_COMPILE_DEFINITIONS BUILDING_V8_SHARED __PROSPERO__)
+elseif (__COMPILER_NX) 
+    # nintendo sdk will handle this add_compile_options("$<$<CONFIG:Debug>:-DNN_SDK_BUILD_DEBUG> $<$<CONFIG:Release>:-DNN_SDK_BUILD_RELEASE>")
+    add_definitions(-D__SWITCH__)
+    set_property(TARGET puerts PROPERTY VS_USER_PROPS "${CMAKE_CURRENT_LIST_DIR}/cmake/NX.local.props")
 endif ()
 
 # link
@@ -318,6 +326,7 @@ if( USING_MULT_BACKEND )
         endif ()
     endif ()
 endif ()
+
 
 if ( WIN32 AND NOT CYGWIN AND NOT ( CMAKE_SYSTEM_NAME STREQUAL "WindowsStore" ) AND NOT ANDROID AND NOT MSYS)
 	set_property(TARGET puerts PROPERTY

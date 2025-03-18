@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- このファイルのファイル名を変更しないでください -->
+<!-- このファイルを直接編集しないでください -->
+
+<Project ToolsVersion="4.0"
+    xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup >
+        <NintendoSdkRoot>$(NINTENDO_SDK_ROOT)\</NintendoSdkRoot>
+        <NXToolchainDir>$(NintendoSdkRoot)Compilers\NintendoClang</NXToolchainDir>
+        <NintendoSdkSpec>NX</NintendoSdkSpec>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|NX64'" Label="Configuration">
+        <NintendoSdkBuildType>Debug</NintendoSdkBuildType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|NX64'" Label="Configuration">
+        <NintendoSdkBuildType>Release</NintendoSdkBuildType>
+    </PropertyGroup>
+    <!-- NintendoSDK が指定する VCToolsVersion の設定用 -->
+    <Import Project="$(NintendoSdkRoot)Build\Vc\NintendoSdkVcProjectSettings.props" Condition="exists('$(NintendoSdkRoot)Build\Vc\NintendoSdkVcProjectSettings.props')" />
+</Project>
