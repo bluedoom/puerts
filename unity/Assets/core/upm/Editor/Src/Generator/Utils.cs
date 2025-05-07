@@ -178,13 +178,47 @@ namespace Puerts.Editor
                 return getMethod == null ? setMethod.IsStatic : getMethod.IsStatic;
             }
 
+
+            static Dictionary<System.Type, bool> isDisallowedTypeCache = new Dictionary<System.Type, bool>();
             internal static bool isDisallowedType(Type type) 
             {
+                if (isDisallowedTypeCache.ContainsKey(type))
+                {
+                    return isDisallowedTypeCache[type];
+                }
                 var result = false;
                 foreach (var filter in DisallowedTypeFilters)
                 {
                     result = result || filter(type);
+                    if (result) break;
                 }
+                if (!result)
+                {
+                    Type baseType = type.BaseType;
+                    while (baseType != null && baseType != typeof(System.Object))
+                    {
+                        if (isDisallowedType(baseType))
+                        {
+                            result = true;
+                            break;
+                        }
+                        baseType = baseType.BaseType;
+                    }
+                }
+                if (!result && type.IsValueType && !type.IsPrimitive)
+                {
+                    isDisallowedTypeCache[type] = result;
+                    foreach (var field in type.GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                    {
+                        var rawFiledType = (field.FieldType.IsPointer || field.FieldType.IsByRef) ? field.FieldType.GetElementType() : field.FieldType;
+                        if (isDisallowedType(rawFiledType))
+                        {
+                            result = true;
+                            break;
+                        }
+                    }
+                }
+                isDisallowedTypeCache[type] = result;
                 return result;
             }
 
@@ -227,7 +261,7 @@ namespace Puerts.Editor
                     FieldInfo fi = (mbi as FieldInfo);
                     if (
                         fi.FieldType.IsPointer
-#if UNITY_2021_2_OR_NEWER
+#if UNITY_2021_2_OR_NEWER || PUERTS_GENERAL || PUERTS_GENERAL_OSX
                         || fi.FieldType.IsByRefLike
 #endif
                     )
@@ -248,7 +282,7 @@ namespace Puerts.Editor
                     PropertyInfo pi = (mbi as PropertyInfo);
                     if (
                         pi.PropertyType.IsPointer
-#if UNITY_2021_2_OR_NEWER
+#if UNITY_2021_2_OR_NEWER || PUERTS_GENERAL || PUERTS_GENERAL_OSX
                         || pi.PropertyType.IsByRefLike
 #endif
                     )
@@ -280,7 +314,7 @@ namespace Puerts.Editor
                         return true;
                     }
                     if (mi.ReturnType.IsPointer
-#if UNITY_2021_2_OR_NEWER
+#if UNITY_2021_2_OR_NEWER || PUERTS_GENERAL || PUERTS_GENERAL_OSX
                         || mi.ReturnType.IsByRefLike
 #endif
                     )
@@ -302,7 +336,7 @@ namespace Puerts.Editor
                     MethodBase mb = mbi as MethodBase;
                     if (
                         mb.GetParameters().Any(pInfo => pInfo.ParameterType.IsPointer
-#if UNITY_2021_2_OR_NEWER
+#if UNITY_2021_2_OR_NEWER || PUERTS_GENERAL || PUERTS_GENERAL_OSX
                         || pInfo.ParameterType.IsByRefLike
 #endif
                     ))

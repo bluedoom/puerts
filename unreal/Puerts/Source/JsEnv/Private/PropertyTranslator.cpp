@@ -11,7 +11,11 @@
 #include "ObjectMapper.h"
 #include "StructWrapper.h"
 #if !defined(ENGINE_INDEPENDENT_JSENV)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5)
+#include "StructUtils/UserDefinedStruct.h"
+#else
 #include "Engine/UserDefinedStruct.h"
+#endif
 #endif
 #include "ArrayBuffer.h"
 #include "ContainerWrapper.h"
@@ -34,7 +38,7 @@ void FPropertyTranslator::Getter(const v8::FunctionCallbackInfo<v8::Value>& Info
 void FPropertyTranslator::Getter(
     v8::Isolate* Isolate, v8::Local<v8::Context>& Context, const v8::FunctionCallbackInfo<v8::Value>& Info)
 {
-    if (!PropertyWeakPtr.IsValid())
+    if (!IsPropertyValid())
     {
         FV8Utils::ThrowException(Isolate, "Property is invalid!");
         return;
@@ -86,7 +90,7 @@ void FPropertyTranslator::Setter(const v8::FunctionCallbackInfo<v8::Value>& Info
 void FPropertyTranslator::Setter(v8::Isolate* Isolate, v8::Local<v8::Context>& Context, v8::Local<v8::Value> Value,
     const v8::FunctionCallbackInfo<v8::Value>& Info)
 {
-    if (!PropertyWeakPtr.IsValid())
+    if (!IsPropertyValid())
     {
         FV8Utils::ThrowException(Isolate, "Property is invalid!");
         return;
@@ -129,7 +133,7 @@ void FPropertyTranslator::DelegateGetter(const v8::FunctionCallbackInfo<v8::Valu
 
     FPropertyTranslator* PropertyTranslator =
         static_cast<FPropertyTranslator*>((v8::Local<v8::External>::Cast(Info.Data()))->Value());
-    if (!PropertyTranslator->PropertyWeakPtr.IsValid())
+    if (!PropertyTranslator->IsPropertyValid())
     {
         FV8Utils::ThrowException(Isolate, "Property is invalid!");
         return;
@@ -181,7 +185,7 @@ void FPropertyTranslator::SetAccessor(v8::Isolate* Isolate, v8::Local<v8::Functi
                                                                                      Property->GetDisplayNameText().ToString()
 #endif
                                                                                      : Property->GetName();
-#if PUERTS_WITH_EDITOR_SUFFIX
+#ifdef PUERTS_WITH_EDITOR_SUFFIX
         if (Property->IsEditorOnlyProperty())
         {
             PropertyName += EditorOnlyPropertySuffix;

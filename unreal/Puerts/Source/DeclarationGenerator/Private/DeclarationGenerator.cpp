@@ -28,11 +28,16 @@
 #include "Widgets/Notifications/SNotificationList.h"
 // #include "Misc/MessageDialog.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5)
+#include "StructUtils/UserDefinedStruct.h"
+#else
 #include "Engine/UserDefinedStruct.h"
+#endif
 #include "Engine/UserDefinedEnum.h"
 #include "Engine/Blueprint.h"
 #include "CodeGenerator.h"
 #include "JSClassRegister.h"
+#include "UECompatible.h"
 #include "Engine/CollisionProfile.h"
 #if (ENGINE_MAJOR_VERSION >= 5)
 #include "ToolMenus.h"
@@ -897,7 +902,7 @@ bool FTypeScriptDeclarationGenerator::GenFunction(
         }
 
         FString FuncName = Function->GetName();
-#if PUERTS_WITH_EDITOR_SUFFIX
+#ifdef PUERTS_WITH_EDITOR_SUFFIX
         if (puerts::IsEditorOnlyUFunction(Function))
         {
             FuncName += EditorOnlyPropertySuffix;
@@ -1089,7 +1094,10 @@ void FTypeScriptDeclarationGenerator::GatherExtensions(UStruct* Struct, FStringB
         while (PropertyInfo && PropertyInfo->Name && PropertyInfo->Type)
         {
             if (Struct->FindPropertyByName(UTF8_TO_TCHAR(PropertyInfo->Name)))
+            {
+                ++PropertyInfo;
                 continue;
+            }
             Buff << "    " << PropertyInfo->Name << ": " << GetNamePrefix(PropertyInfo->Type) << PropertyInfo->Type->Name()
                  << ";\n";
             ++PropertyInfo;
@@ -1229,10 +1237,12 @@ void FTypeScriptDeclarationGenerator::GenClass(UClass* Class)
 
         FStringBuffer TmpBuff;
         FString SN = Property->GetName();
+#ifdef PUERTS_WITH_EDITOR_SUFFIX
         if (Property->IsEditorOnlyProperty())
         {
             SN += EditorOnlyPropertySuffix;
         }
+#endif
         TmpBuff << SafeFieldName(SN) << ": ";
         TArray<UObject*> RefTypesTmp;
         if (!GenTypeDecl(TmpBuff, Property, RefTypesTmp))
@@ -1364,7 +1374,6 @@ void FTypeScriptDeclarationGenerator::GenEnum(UEnum* Enum)
 
 void FTypeScriptDeclarationGenerator::GenStruct(UStruct* Struct)
 {
-#include "ExcludeStructs.h"
     FStringBuffer StringBuffer{"", ""};
     const FString SafeStructName =
         Struct->IsNative() ? SafeName(Struct->GetName()) : PUERTS_NAMESPACE::FilenameToTypeScriptVariableName(Struct->GetName());
@@ -1394,6 +1403,32 @@ void FTypeScriptDeclarationGenerator::GenStruct(UStruct* Struct)
 
     auto GenConstrutor = [&]()
     {
+        auto ClassDefinition = PUERTS_NAMESPACE::FindClassByType(Struct);
+        if (ClassDefinition && ClassDefinition->ConstructorInfos && ClassDefinition->ConstructorInfos->Name &&
+            ClassDefinition->ConstructorInfos->Type)
+        {
+            PUERTS_NAMESPACE::NamedFunctionInfo* ConstructorInfo = ClassDefinition->ConstructorInfos;
+            while (ConstructorInfo && ConstructorInfo->Name && ConstructorInfo->Type)
+            {
+                FStringBuffer Tmp;
+                Tmp << "constructor(";
+                GenArgumentsForFunctionInfo(ConstructorInfo->Type, Tmp);
+                Tmp << ")";
+                StringBuffer << "    " << Tmp.Buffer << ";\n";
+                for (unsigned int i = 0; i < ConstructorInfo->Type->ArgumentCount(); i++)
+                {
+                    auto argInfo = ConstructorInfo->Type->Argument(i);
+                    if (argInfo->IsUEType())
+                    {
+                        UScriptStruct* UsedStruct = PUERTS_NAMESPACE::FindAnyType<UScriptStruct>(UTF8_TO_TCHAR(argInfo->Name()));
+                        if (UsedStruct)
+                            Gen(UsedStruct);
+                    }
+                }
+                ++ConstructorInfo;
+            }
+            return;
+        }
         FStringBuffer TmpBuff;
         TmpBuff << "constructor(";
         bool First = true;
@@ -1552,7 +1587,7 @@ private:
 
         FName PackagePath = (InSearchPath == NAME_None) ? FName(TEXT("/Game")) : InSearchPath;
 
-        FString DialogMessage = FString::Printf(TEXT("genertate finish, %s store in %s, ([PATH=%s])"), TEXT("ue.d.ts"),
+        FString DialogMessage = FString::Printf(TEXT("generate finish, %s store in %s, ([PATH=%s])"), TEXT("ue.d.ts"),
             TEXT("Content/Typing/ue"), *PackagePath.ToString());
 
         FText DialogText = FText::Format(LOCTEXT("PluginButtonDialogText", "{0}"), FText::FromString(DialogMessage));

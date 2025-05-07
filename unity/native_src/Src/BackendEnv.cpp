@@ -39,6 +39,10 @@
 #endif
 #endif
 
+#if defined(WITH_WEBSOCKET)
+void InitWebsocketPPWrap(v8::Local<v8::Context> Context);
+#endif
+
 namespace PUERTS_NAMESPACE
 {
 
@@ -218,6 +222,18 @@ void FBackendEnv::GlobalPrepare()
 {
     if (!GPlatform)
     {
+        std::string Flags = "--stack_size=856";
+#if PUERTS_DEBUG
+        Flags += " --expose-gc";
+#endif
+#if defined(PLATFORM_IOS) || defined(PLATFORM_OHOS) || defined(JITLESS)
+        Flags += " --jitless --no-expose-wasm";
+#endif
+#if V8_MAJOR_VERSION <= 9
+        Flags += " --no-harmony-top-level-await";
+#endif
+        v8::V8::SetFlagsFromString(Flags.c_str(), static_cast<int>(Flags.size()));
+
 #if defined(WITH_NODEJS)
         int Argc = 2;
         char* ArgvIn[] = {"puerts", "--no-harmony-top-level-await"};
@@ -344,6 +360,10 @@ void FBackendEnv::Initialize(void* external_quickjs_runtime, void* external_quic
     Global->Set(Context, v8::String::NewFromUtf8(Isolate, EXECUTEMODULEGLOBANAME).ToLocalChecked(), v8::FunctionTemplate::New(Isolate, esmodule::ExecuteModule)->GetFunction(Context).ToLocalChecked()).Check();
     Global->Set(Context, v8::String::NewFromUtf8(Isolate, "v8").ToLocalChecked(), GetV8Extras(Isolate, Context));
 #endif
+
+#if defined(WITH_WEBSOCKET)
+    InitWebsocketPPWrap(Context);
+#endif
 }
 
 void FBackendEnv::UnInitialize()
@@ -385,6 +405,9 @@ void FBackendEnv::UnInitialize()
 void FBackendEnv::LogicTick()
 {
 #if WITH_NODEJS
+#ifdef THREAD_SAFE
+    v8::Locker Locker(MainIsolate);
+#endif
     v8::Isolate::Scope IsolateScope(MainIsolate);
     v8::HandleScope HandleScope(MainIsolate);
     auto Context = MainContext.Get(MainIsolate);
@@ -443,6 +466,12 @@ bool FBackendEnv::ClearModuleCache(v8::Isolate* Isolate, v8::Local<v8::Context> 
     if (key.size() == 0) 
     {
         PathToModuleMap.clear();
+#if !WITH_QUICKJS
+        for (auto it = ScriptIdToModuleInfo.begin(); it != ScriptIdToModuleInfo.end(); it++) {
+            delete it->second;
+        }
+        ScriptIdToModuleInfo.clear();
+#endif
         return true;
     } 
     else 
@@ -450,10 +479,21 @@ bool FBackendEnv::ClearModuleCache(v8::Isolate* Isolate, v8::Local<v8::Context> 
         auto finder = PathToModuleMap.find(key);
         if (finder != PathToModuleMap.end()) 
         {
+#if !WITH_QUICKJS
+            auto iter = FindModuleInfo(finder->second.Get(Isolate));
+            if (iter != ScriptIdToModuleInfo.end())
+            {
+                delete iter->second;
+                ScriptIdToModuleInfo.erase(iter);
+            }
+#endif
             PathToModuleMap.erase(key);
 #if !WITH_QUICKJS
             return true;
 #else
+#ifdef THREAD_SAFE
+            v8::Locker Locker(Isolate);
+#endif
             v8::Isolate::Scope IsolateScope(Isolate);
             v8::HandleScope HandleScope(Isolate);
             JSContext* ctx = Context->context_;
@@ -525,12 +565,19 @@ JSModuleDef* FBackendEnv::LoadModule(JSContext* ctx, const char *name)
         // exception from Normalize
     //    return nullptr;
     //}
+#if defined(QUICKJS_VERSION) && QUICKJS_VERSION >= 20240214
+    if (JS_HasException(ctx))
+    {
+        return nullptr;
+    }
+#else
     auto Ex = JS_GetException(ctx);
     if (!JS_IsUndefined(Ex) && !JS_IsNull(Ex))
     {
         JS_Throw(ctx, Ex);
         return nullptr;
     }
+#endif
     // quickjs本身已经做了cache，这只是为了支持ClearModuleCache ///
     auto Iter = PathToModuleMap.find(name);
     if (Iter != PathToModuleMap.end())
@@ -959,6 +1006,9 @@ static void DoHostImportModuleDynamically(void* import_data_)
       
     v8::Isolate* isolate(import_data->isolate);
     auto backend_env = FBackendEnv::Get(isolate);
+#ifdef THREAD_SAFE
+    v8::Locker Locker(isolate);
+#endif
     v8::HandleScope handle_scope(isolate);
     v8::Local<v8::Context> context = backend_env->MainContext.Get(isolate);
     v8::Context::Scope context_scope(context);
@@ -1037,6 +1087,9 @@ v8::MaybeLocal<v8::Promise> esmodule::HostImportModuleDynamically(
     v8::Local<v8::Value> referrer_name = referrer->GetResourceName();
 #endif
     auto isolate = context->GetIsolate();
+#ifdef THREAD_SAFE
+    v8::Locker Locker(isolate);
+#endif
     v8::HandleScope handle_scope(isolate);
     v8::Context::Scope context_scope(context);
     v8::Local<v8::Promise::Resolver> resolver;
@@ -1076,6 +1129,9 @@ void esmodule::HostInitializeImportMetaObject(v8::Local<v8::Context> Context, v8
 std::string FBackendEnv::GetJSStackTrace()
 {
     v8::Isolate* Isolate = MainIsolate;
+#ifdef THREAD_SAFE
+    v8::Locker Locker(Isolate);
+#endif
     v8::HandleScope HandleScope(Isolate);
     v8::Local<v8::Context> Context = MainContext.Get(Isolate);
     v8::Context::Scope ContextScope(Context);
@@ -1104,7 +1160,7 @@ std::string FBackendEnv::GetJSStackTrace()
     JS_FreeValue(ctx, stack);
     return ret;
 #else
-    return StackTraceToString(Isolate, v8::StackTrace::CurrentStackTrace(Isolate, 10, v8::StackTrace::kDetailed));
+    return StackTraceToString(Isolate, v8::StackTrace::CurrentStackTrace(Isolate, 10, v8::StackTrace::kDetailed)).c_str();
 #endif
 }
 

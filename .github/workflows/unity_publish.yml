@@ -120,7 +120,7 @@ jobs:
           backend: mult
 
   ios:
-    runs-on: macos-12
+    runs-on: macos-13
 
     steps:
       - uses: actions/checkout@v3
@@ -171,7 +171,7 @@ jobs:
           backend: mult
 
   osx:
-    runs-on: macos-12
+    runs-on: macos-13
 
     steps:
       - uses: actions/checkout@v3
@@ -345,37 +345,35 @@ jobs:
           echo "API_LEVEL=$(cat unity/native_src/Src/Puerts.cpp | grep -Po '(?<=API_LEVEL\s)(\d+)')" >> $GITHUB_ENV
           node -e "const pjson = JSON.parse(fs.readFileSync('$GITHUB_WORKSPACE/unity/Assets/core/upm/package.json', 'utf-8')); pjson.version = '${{ github.event.inputs.tag_name }}' ; fs.writeFileSync('$GITHUB_WORKSPACE/unity/Assets/core/upm/package.json', JSON.stringify(pjson))"
             
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4
         with:
-          name: Unity_Plugins (v8_9.4_Release)
+          pattern: Unity_Plugins_v8_9.4_Release_*
           path: V8/upm/Plugins/
+          merge-multiple: true
 
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4
         with:
-          name: Unity_Plugins (v8_10.6.194_Release)
-          path: V8_10/upm/Plugins/
-
-      - uses: actions/download-artifact@v1
-        with:
-          name: Unity_Plugins (quickjs_Release)
+          pattern: Unity_Plugins_quickjs_Release_*
           path: Quickjs/upm/Plugins/
+          merge-multiple: true
 
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4
         with:
-          name: Unity_Plugins (nodejs_16_Release)
+          pattern: Unity_Plugins_nodejs_16_Release_*
           path: Nodejs/upm/Plugins/
+          merge-multiple: true
           
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4
         with:
-          name: Unity_Plugins (mult_Release)
+          pattern: Unity_Plugins_mult_Release_*
           path: Mult/upm/Plugins/
+          merge-multiple: true
           
       - name: Create Release Asset
         run: |
           cp $GITHUB_WORKSPACE/LICENSE $GITHUB_WORKSPACE/unity/Assets/core/upm
           ls -l $GITHUB_WORKSPACE/unity/Assets/core/upm
           cd V8/ && cp -r $GITHUB_WORKSPACE/unity/Assets/core/upm . && tar cvfz ../PuerTS_V8_${{ github.event.inputs.tag_name }}.tgz upm && cd -
-          cd V8_10/ && cp -r $GITHUB_WORKSPACE/unity/Assets/core/upm . && tar cvfz ../PuerTS_V8_10_${{ github.event.inputs.tag_name }}.tgz upm && cd -
           cd Quickjs/ && cp -r $GITHUB_WORKSPACE/unity/Assets/core/upm . && tar cvfz ../PuerTS_Quickjs_${{ github.event.inputs.tag_name }}.tgz upm && cd -
           cd Nodejs/ && cp -r $GITHUB_WORKSPACE/unity/Assets/core/upm . && tar cvfz ../PuerTS_Nodejs_${{ github.event.inputs.tag_name }}.tgz upm && cd -
           cd Mult/ && cp -r $GITHUB_WORKSPACE/unity/Assets/core/upm . && tar cvfz ../PuerTS_Mult_${{ github.event.inputs.tag_name }}.tgz upm && cd -
@@ -404,17 +402,6 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./PuerTS_V8_${{ github.event.inputs.tag_name }}.tgz
           asset_name: PuerTS_V8_${{ github.event.inputs.tag_name }}.tgz
-          asset_content_type: application/tgz
-          
-      - name: Upload V8_10 Plugins
-        #id: upload-release-asset 
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./PuerTS_V8_10_${{ github.event.inputs.tag_name }}.tgz
-          asset_name: PuerTS_V8_10_${{ github.event.inputs.tag_name }}.tgz
           asset_content_type: application/tgz
           
       - name: Upload Quickjs Plugins
