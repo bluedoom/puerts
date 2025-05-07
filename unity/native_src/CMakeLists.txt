@@ -309,9 +309,9 @@ if ( APPLE )
             PRIVATE "-Wl,-rpath,@loader_path/"
         )
     endif ()
-elseif ( SWITCH_PLATFORM )
+elseif(__COMPILER_NX)
     add_library(puerts STATIC
-        ${PUERTS_SRC} ${PUERTS_INC} ${BEACKEND_QUICKJS_SRC}
+    ${PUERTS_SRC} ${PUERTS_INC} ${BEACKEND_QUICKJS_SRC}
     )
 else ()
     if (CMAKE_SYSTEM_NAME MATCHES "Emscripten") 
@@ -518,7 +518,6 @@ if ( MSYS OR WIN32 )
             shlwapi.lib
         )
     endif ()
-
     # definition
     list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_WINDOWS)
 elseif ( OHOS )
@@ -593,7 +592,6 @@ elseif ( APPLE )
 elseif (UNIX)
     # link
     target_link_libraries(puerts pthread)
-    
     # definition
     list(APPEND PUERTS_COMPILE_DEFINITIONS PLATFORM_LINUX)
     if (NOT ("${JS_ENGINE}" STREQUAL "nodejs_16") AND NOT ("${JS_ENGINE}" STREQUAL "v8_10.6.194") AND NOT (CMAKE_SYSTEM_NAME MATCHES "Emscripten"))
@@ -601,6 +599,13 @@ elseif (UNIX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
     endif ()
+elseif (__COMPILER_PS5)
+    target_link_libraries(puerts ${CMAKE_THREAD_LIBS_INIT})
+    list(APPEND PUERTS_COMPILE_DEFINITIONS BUILDING_V8_SHARED __PROSPERO__)
+elseif (__COMPILER_NX) 
+    # nintendo sdk will handle this add_compile_options("$<$<CONFIG:Debug>:-DNN_SDK_BUILD_DEBUG> $<$<CONFIG:Release>:-DNN_SDK_BUILD_RELEASE>")
+    add_definitions(-D__SWITCH__)
+    set_property(TARGET puerts PROPERTY VS_USER_PROPS "${CMAKE_CURRENT_LIST_DIR}/cmake/NX.local.props")
 endif ()
 
 # ref https://github.com/Tencent/puerts/issues/1796 Author:NiceTry12138 
@@ -671,6 +676,7 @@ if( USING_MULT_BACKEND )
         endif ()
     endif ()
 endif ()
+
 
 if ( WIN32 AND NOT CYGWIN AND NOT ( CMAKE_SYSTEM_NAME STREQUAL "WindowsStore" ) AND NOT ANDROID AND NOT MSYS)
 	set_property(TARGET puerts PROPERTY
