@@ -37,7 +37,9 @@
 #endif
 #endif
 #include <time.h>
+#if !defined(__PROSPERO__)
 #include <fenv.h>
+#endif
 #include <math.h>
 
 #include "cutils.h"
@@ -43232,7 +43234,22 @@ static int getTimezoneOffset(int64_t time) {
         }
     }
     ti = time;
+#ifdef __PROSPERO__ 
+    {
+        struct tm* tm;
+        time_t gm_ti, loc_ti;
+
+        tm = gmtime(&ti);
+        gm_ti = mktime(tm);
+
+        tm = localtime(&ti);
+        loc_ti = mktime(tm);
+
+        return (gm_ti - loc_ti) / 60;
+    }
+#else
     localtime_r(&ti, &tm);
+
 #ifdef NO_TM_GMTOFF
     struct tm gmt;
     gmtime_r(&ti, &gmt);
@@ -43244,6 +43261,7 @@ static int getTimezoneOffset(int64_t time) {
 #else
     return -tm.tm_gmtoff / 60;
 #endif /* NO_TM_GMTOFF */
+#endif
 #endif
 }
 

@@ -98,7 +98,7 @@ void CppObjectMapper::BindAndAddToCache(const puerts::JSClassDefinition* typeInf
     }
     else
     {
-        auto Ret = CDataCache.insert({ptr, FObjectCacheNode(typeInfo->TypeId)});
+        auto Ret = CDataCache.insert(std::make_pair(ptr, FObjectCacheNode(typeInfo->TypeId)));
         CacheNodePtr = &Ret.first->second;
     }
     CacheNodePtr->MustCallFinalize = callFinalize;

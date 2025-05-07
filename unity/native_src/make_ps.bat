@@ -1,4 +1,3 @@
-::# From https://github.com/Tencent/puerts/issues/1796 Author:NiceTry12138 
 set CUR_DIR=%~dp0
 cd %CUR_DIR%
 
@@ -9,9 +8,8 @@ mkdir buildPS5 & pushd buildPS5
 call "%SCE_ROOT_DIR%\Prospero\Tools\CMake\PS5CMake.bat" ^
         -DJS_ENGINE=quickjs -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON ^
         -DBACKEND_DEFINITIONS="WITH_QUICKJS;V8_94_OR_NEWER;WITHOUT_INSPECTOR" ^
-        -DBACKEND_INC_NAMES=/Inc -DBACKEND_LIB_NAMES="/Lib/Prospero/libquickjs.a" ^
         ..
 popd
-cmake --build buildPS5 --config Debug
+@REM cmake --build buildPS5 --config Debug
 cmake --build buildPS5 --config Release
 pause

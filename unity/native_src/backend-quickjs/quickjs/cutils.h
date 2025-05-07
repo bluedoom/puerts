@@ -42,8 +42,10 @@ extern "C" {
 #endif
 #if defined(__APPLE__)
 #include <malloc/malloc.h>
-#elif defined(__linux__) || defined(__ANDROID__) || defined(__CYGWIN__)
+#elif defined(__linux__) || defined(__ANDROID__) || defined(__CYGWIN__) || defined(__SWITCH__)
 #include <malloc.h>
+#elif defined(__PROSPERO__)
+#include <mspace.h>
 #elif defined(__FreeBSD__)
 #include <malloc_np.h>
 #elif defined(_WIN32)
