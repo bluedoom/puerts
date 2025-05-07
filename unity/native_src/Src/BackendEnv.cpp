@@ -285,6 +285,7 @@ void FBackendEnv::Initialize(void* external_quickjs_runtime, void* external_quic
     
 #if WITH_QUICKJS
     MainIsolate = (external_quickjs_runtime == nullptr) ? v8::Isolate::New(*CreateParams) : v8::Isolate::New(external_quickjs_runtime);
+    JS_SetMaxStackSize(MainIsolate->runtime_, 10 * 1024 * 1024); // 设置调用堆栈为 10m
 #else
     MainIsolate = v8::Isolate::New(*CreateParams);
 #endif
