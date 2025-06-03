@@ -1052,6 +1052,26 @@ namespace Puerts
                 pendingRemovedJsObjList.Clear();
             }
         }
+        #region ACT-Modify
+        public bool IsAlive => !disposed;
+        public static void NotifyGC()
+        {
+            lock (jsEnvs)
+            {
+                foreach (var jsEnv in jsEnvs)
+                {
+                    if (jsEnv != null && jsEnv.IsAlive)
+                    {
+                        if (jsEnv.Backend is BackendV8 v8)
+                            v8.LowMemoryNotification();
+                        else if (jsEnv.Backend is BackendQuickJS qjs)
+                            qjs.LowMemoryNotification();
+                    }
+                }
+            }
+        }
+        #endregion
+
     }
 }
 

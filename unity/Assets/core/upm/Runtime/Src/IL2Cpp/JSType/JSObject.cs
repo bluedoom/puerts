@@ -35,6 +35,9 @@ namespace Puerts
         {
             Puerts.NativeAPI.AddPendingKillScriptObjects(apis, nativeJsEnv, valueRef);
         }
+        #region ACT-Modify
+        public bool IsValid => nativeJsEnv != IntPtr.Zero; // TODO
+        #endregion
     }
 }
 

@@ -51,7 +51,9 @@ namespace Puerts.Editor
                 Directory.CreateDirectory(saveTo);
                 Directory.CreateDirectory(Path.Combine(saveTo, "Typing/csharp"));
                 FileExporter.ExportDTS(saveTo);
-                Debug.Log("finished! use " + (DateTime.Now - start).TotalMilliseconds + " ms");
+                #region ACT-Modify
+                Debug.Log($"{saveTo} finished! use " + (DateTime.Now - start).TotalMilliseconds + " ms");
+                #endregion
                 AssetDatabase.Refresh();
 
                 Utils.SetFilters(null);
@@ -92,6 +94,12 @@ namespace Puerts.Editor
                 AssetDatabase.Refresh();
             }
 #endif
+            #region ACT-Modify
+            public static void ClearFilter()
+            {
+                Utils.SetFilters(null);
+            }
+            #endregion
         }
     }
 }

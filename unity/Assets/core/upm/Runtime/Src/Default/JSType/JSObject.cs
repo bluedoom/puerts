@@ -50,7 +50,9 @@ namespace Puerts
         private readonly JsEnv jsEnv;
 
         private IntPtr nativeJsObjectPtr;
-
+        #region ACT-Modify
+        public bool IsValid => jsEnv != null && jsEnv.IsAlive;
+        #endregion
         public IntPtr getJsObjPtr() {
             return nativeJsObjectPtr;
         }
