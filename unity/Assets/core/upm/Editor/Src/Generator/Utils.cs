@@ -416,7 +416,8 @@ namespace Puerts.Editor
             public static Type getExtendedType(MethodInfo method)
             {
                 var type = method.GetParameters()[0].ParameterType;
-                return type.IsGenericParameter ? type.BaseType : type;
+                type = type.IsGenericParameter ? type.BaseType : type;
+                 return type.IsPointer || type.IsByRef ? type.GetElementType() : type;
             }
 
             public static MethodInfo[] GetExtensionMethods(Type checkType, HashSet<Type> genTypeSet)
