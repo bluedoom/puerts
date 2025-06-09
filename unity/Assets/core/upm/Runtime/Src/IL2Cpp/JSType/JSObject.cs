@@ -36,7 +36,15 @@ namespace Puerts
             Puerts.NativeAPI.AddPendingKillScriptObjects(apis, nativeJsEnv, valueRef);
         }
         #region ACT-Modify
-        public bool IsValid => nativeJsEnv != IntPtr.Zero; // TODO
+        public bool IsValid
+        {
+            get
+            {
+                pesapi_ffi ffi = System.Runtime.InteropServices.Marshal.PtrToStructure<pesapi_ffi>(apis);
+                var envRef = ffi.get_ref_associated_env(valueRef);
+                return ffi.env_ref_is_valid(envRef); // jsEnv已经释放
+            }
+        }
         #endregion
     }
 }
