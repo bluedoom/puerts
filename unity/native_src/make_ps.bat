@@ -12,4 +12,4 @@ call "%SCE_ROOT_DIR%\Prospero\Tools\CMake\PS5CMake.bat" ^
 popd
 @REM cmake --build buildPS5 --config Debug
 cmake --build buildPS5 --config Release
-pause
+xcopy /Y /E /I buildPS5\Release\*.* ..\Assets\core\upm\Plugins\Prospero

@@ -1,4 +1,3 @@
-::# From https://github.com/Tencent/puerts/issues/1796 Author:NiceTry12138 
 chcp 65001
 set CUR_DIR=%~dp0
 cd %CUR_DIR%
@@ -15,3 +14,4 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/ns.toolchain.cmake ^
 popd
 
 cmake --build nx64 --config Release
+xcopy /Y /E /I nx64\Release\*.* ..\Assets\core\upm\Plugins\NX64
