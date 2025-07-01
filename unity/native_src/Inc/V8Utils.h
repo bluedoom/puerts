@@ -65,8 +65,7 @@ public:
 
             // 输出 (filename):(line number): (message).
             std::ostringstream stm;
-            stm << ExceptionStr;
-
+            
             // 输出调用栈信息
             v8::MaybeLocal<v8::Value> MaybeStackTrace = v8::TryCatch::StackTrace(Context, ExceptionValue);
             if (!MaybeStackTrace.IsEmpty())
@@ -76,6 +75,7 @@ public:
             }
             else
             {
+                stm << ExceptionStr;
                 v8::String::Utf8Value FileName(Isolate, Message->GetScriptResourceName());
                 int LineNum = Message->GetLineNumber(Context).FromJust();
                 int StartColumn = Message->GetStartColumn();
