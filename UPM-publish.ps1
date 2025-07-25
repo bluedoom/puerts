@@ -18,9 +18,8 @@ function CopyBinary(){
 
 CopyBinary .\unity\native_src\buildPS5\Release\* .\unity\Assets\core\upm\Plugins\Prospero\
 CopyBinary .\unity\native_src\nx64\Release\* .\unity\Assets\core\upm\Plugins\NX64\
-
+Copy-Item $PSScriptRoot\README.md .\unity\Assets\core\upm\README.md -Force
 $USR = nrm current
-
 Write-Host $USR
 if (!$?) {
     npm install -g nrm --registry $url
@@ -49,3 +48,4 @@ npm-cli-adduser --registry $url --username $user --password $password --email $e
 Push-Location .\unity\Assets\core\upm
 npm publish --verbose
 Pop-Location
+Remove-Item .\unity\Assets\core\upm\README.md -Force
