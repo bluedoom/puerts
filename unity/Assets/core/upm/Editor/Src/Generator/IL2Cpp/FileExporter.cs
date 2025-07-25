@@ -296,7 +296,7 @@ namespace PuertsIl2cpp.Editor
 
                 var delegateInvokes = delegateToBridge
                     .Select(t => t.GetMethod("Invoke"))
-                    .Where(m => m != null);
+                    .Where(m => m != null && m.GetParameters().All(p => !Utils.isDisallowedType(GetUnrefParameterType(p))));
 
                 var delegateUsedTypes = delegateInvokes.SelectMany(m => m.GetParameters()).Select(pi => GetUnrefParameterType(pi))
                     .Concat(delegateInvokes.Select(m => m.ReturnType));
