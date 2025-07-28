@@ -1,8 +1,8 @@
 chcp 65001
 set CUR_DIR=%~dp0
 cd %CUR_DIR%
-del /s/q nx64
-mkdir nx64 & pushd nx64
+del /s/q build_nx64
+mkdir build_nx64 & pushd build_nx64
 
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/ns.toolchain.cmake ^
 	-G "Visual Studio 17" -A NX64 ^
@@ -13,5 +13,5 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/ns.toolchain.cmake ^
         ..
 popd
 
-cmake --build nx64 --config Release
-xcopy /Y /E /I nx64\Release\*.* ..\Assets\core\upm\Plugins\NX64
+cmake --build build_nx64 --config Release
+xcopy /Y /E /I build_nx64\Release\*.* ..\Assets\core\upm\Plugins\NX64
