@@ -15,7 +15,7 @@ namespace Puerts
 {
     public class NativeAPI
     {
-#if (UNITY_IPHONE || UNITY_TVOS || UNITY_WEBGL || UNITY_SWITCH) && !UNITY_EDITOR
+#if (UNITY_IPHONE || UNITY_TVOS || UNITY_WEBGL || UNITY_SWITCH || UNITY_SWITCH2) && !UNITY_EDITOR
         const string DLLNAME = "__Internal";
 #else
         const string DLLNAME = "puerts";
