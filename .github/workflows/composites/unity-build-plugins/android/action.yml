@@ -21,8 +21,8 @@ runs:
       shell: bash
       run: |
         cd ~
-        rm -rf ~/android-ndk-r21b
-        wget -O NDK -q https://dl.google.com/android/repository/android-ndk-r21b-linux-x86_64.zip
+        rm -rf ~/android-ndk-r28c
+        wget -O NDK -q https://dl.google.com/android/repository/android-ndk-r28c-linux.zip
         sudo apt install unzip -y
         unzip -q NDK
     - name: Build
@@ -31,7 +31,7 @@ runs:
         cd unity
         npm i
         cd native_src
-        ANDROID_NDK=~/android-ndk-r21b node ../cli make --platform android --backend ${{ inputs.backend }} --config ${{ inputs.config }}
+        ANDROID_NDK=~/android-ndk-r28c node ../cli make --platform android --backend ${{ inputs.backend }} --config ${{ inputs.config }}
     - name: Upload
       uses: actions/upload-artifact@v3
       with:
