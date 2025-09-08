@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: fe551b463a5303d499560d665b6aec90
+guid: fa77f0e4126f4ab42b0a879938566c9e
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -18,6 +18,7 @@ PluginImporter:
       settings:
         Exclude Android: 1
         Exclude Editor: 1
+        Exclude GameCoreScarlett: 1
         Exclude Linux64: 1
         Exclude OSXUniversal: 1
         Exclude PS5: 0
