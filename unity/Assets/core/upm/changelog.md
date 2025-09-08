@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 you can get the english version change log at [Github Release](https://github.com/Tencent/puerts/releases)
+## [2.2.1-f9] - 2025-05-25
+1. remove switch2 support
 ## [2.2.1-f8] - 2025-05-25
 1. add GameCoreXboxSeries support
 ## [2.2.1] - 2025-04-25

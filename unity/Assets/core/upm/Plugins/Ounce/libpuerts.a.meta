@@ -34,9 +34,6 @@ PluginImporter:
       enabled: 0
       settings:
         CPU: None
-    Switch2:
-      enabled: 1
-      settings: {}
     Win:
       enabled: 0
       settings:
